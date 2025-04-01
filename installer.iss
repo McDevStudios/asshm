@@ -35,7 +35,7 @@ Source: "build\asshm\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 ; Bundled Installers
 Source: "build\installers\python-3.13.2-amd64.exe"; DestDir: "{app}\installers"; Flags: ignoreversion
-Source: "build\installers\putty-arm64-0.79-installer.msi"; DestDir: "{app}\installers"; Flags: ignoreversion
+Source: "build\installers\putty-64bit-0.79-installer.msi"; DestDir: "{app}\installers"; Flags: ignoreversion
 Source: "build\installers\WinSCP-6.3.7-Setup.exe"; DestDir: "{app}\installers"; Flags: ignoreversion
 
 [Icons]
@@ -43,17 +43,42 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-; Install Python
-Filename: "{app}\installers\python-3.13.2-amd64.exe"; Parameters: "/quiet InstallAllUsers=1 PrependPath=1"; StatusMsg: "Installing Python..."; Flags: waituntilterminated
+; Step 1/3 - Install Python
+Filename: "{app}\installers\python-3.13.2-amd64.exe"; \
+    Parameters: "/custom InstallAllUsers=1 PrependPath=1 Include_test=0 Include_launcher=1"; \
+    StatusMsg: "Step 1/3: Installing Python..."; \
+    Flags: waituntilterminated shellexec
 
-; Install PuTTY
-Filename: "msiexec.exe"; Parameters: "/i ""{app}\installers\putty-arm64-0.79-installer.msi"" /qn"; StatusMsg: "Installing PuTTY..."; Flags: waituntilterminated
+; Step 2/3 - Install PuTTY via MSI
+Filename: "msiexec.exe"; \
+    Parameters: "/i ""{app}\installers\putty-64bit-0.79-installer.msi"" /qb! ALLUSERS=1 /l*v ""{app}\putty_install.log"""; \
+    StatusMsg: "Step 2/3: Installing PuTTY..."; \
+    Flags: waituntilterminated
 
-; Install WinSCP
-Filename: "{app}\installers\WinSCP-6.3.7-Setup.exe"; Parameters: "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"; StatusMsg: "Installing WinSCP..."; Flags: waituntilterminated
+; Step 3/3 - Install WinSCP
+Filename: "{app}\installers\WinSCP-6.3.7-Setup.exe"; \
+    Parameters: "/LOADINF=""{tmp}\winscp.inf"" /NORESTART /ALLUSERS /NORUN /NOTOUR"; \
+    StatusMsg: "Step 3/3: Installing WinSCP..."; \
+    Flags: waituntilterminated
 
 ; Launch after install
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{app}" 
+Type: filesandordirs; Name: "{app}"
+
+[Code]
+procedure InitializeWizard;
+begin
+  // Create WinSCP INF file for visible installation
+  SaveStringToFile(ExpandConstant('{tmp}\winscp.inf'),
+    '[Setup]' + #13#10 +
+    'ShowInstDetails=1' + #13#10 +
+    'ShowUninstDetails=1' + #13#10 +
+    'Setup Type=Custom' + #13#10 +
+    'DisableFinishedPage=0' + #13#10, False);
+end;
+
+[Messages]
+; Custom status messages for installation steps
+StatusInstallingLabel=Installing components... %1 
