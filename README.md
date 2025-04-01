@@ -82,6 +82,7 @@ Example sessions.json (paste this into your AppData ASSHM folder):
         "params": ""
     }
 ]
+```
 
 Note: Always use SSH keys instead of passwords when possible for better security. The SSH key file must be .PPK as per PuTTY and WinSCP demands. 
 
