@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+
+# Virtual Environment
+venv/
+
+# build
+/build/
+/dist/
+
+# Project specific
+src/backups/
+src/sessions.json
+*.ppk
+*.pem
+*.key
+
+# Installer files and binaries
+installers/
+*.exe
+*.msi
